@@ -1,7 +1,10 @@
 package com.example.muhammad.amotul.digicore.model.dto.request;
 
+import com.example.muhammad.amotul.digicore.utils.validator.ValidPassword;
+
 public class AccountRegistrationRequestDTO {
     private String accountName;
+    @ValidPassword
     private String password;
     private String confirmPassword;
     private Double initialDeposit;
