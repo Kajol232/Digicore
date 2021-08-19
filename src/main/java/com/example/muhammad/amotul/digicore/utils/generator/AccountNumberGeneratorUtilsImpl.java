@@ -10,7 +10,7 @@ public class AccountNumberGeneratorUtilsImpl implements IAccountNumberGeneratorU
         String accountNumber = accountType.value;
         int length = String.valueOf(size).length();
         String num = generateRandomDigits(7 - length);
-        if(num.length() == length){
+        if(num.length() != length){
             accountNumber += num + size;
             return accountNumber;
         }

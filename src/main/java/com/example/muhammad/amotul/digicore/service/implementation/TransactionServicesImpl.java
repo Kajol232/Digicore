@@ -3,6 +3,8 @@ package com.example.muhammad.amotul.digicore.service.implementation;
 import com.example.muhammad.amotul.digicore.exceptions.AccountNotFoundException;
 import com.example.muhammad.amotul.digicore.exceptions.InsufficientFundException;
 import com.example.muhammad.amotul.digicore.exceptions.InvalidAmountException;
+import com.example.muhammad.amotul.digicore.exceptions.UnauthorizedUserAccount;
+import com.example.muhammad.amotul.digicore.model.Account;
 import com.example.muhammad.amotul.digicore.model.Transaction;
 import com.example.muhammad.amotul.digicore.model.TransactionType;
 import com.example.muhammad.amotul.digicore.model.dto.request.DepositRequestDTO;
@@ -12,6 +14,7 @@ import com.example.muhammad.amotul.digicore.repository.implementation.AccountRep
 import com.example.muhammad.amotul.digicore.repository.implementation.TransactionRepositoryImpl;
 import com.example.muhammad.amotul.digicore.service.interfaces.ITransactionServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -22,9 +25,11 @@ import java.util.List;
 @Service
 public class TransactionServicesImpl implements ITransactionServices {
     @Autowired
-    private static AccountRepositoryImpl accountRepository;
+    private AccountRepositoryImpl accountRepository;
     @Autowired
-    private static TransactionRepositoryImpl transactionRepository;
+    private TransactionRepositoryImpl transactionRepository;
+    @Autowired
+    private PasswordEncoder encoder;
 
 
     @Override
@@ -59,31 +64,37 @@ public class TransactionServicesImpl implements ITransactionServices {
     }
 
     @Override
-    public double withdrawFromAccount(WithdrawalRequestDTO withdrawalRequestDTO) throws AccountNotFoundException, InsufficientFundException, InvalidAmountException {
+    public double withdrawFromAccount(WithdrawalRequestDTO withdrawalRequestDTO) throws AccountNotFoundException, InsufficientFundException, InvalidAmountException, UnauthorizedUserAccount {
         double balance;
         if(withdrawalRequestDTO != null){
             String accountNumber = withdrawalRequestDTO.getAccountNumber();
             if(accountRepository.isAccountNumberExists(accountNumber)){
-                balance = accountRepository.getAccountByAccountNumber(accountNumber).getBalance();
-                if(balance >= 500.0){
-                    double amount = withdrawalRequestDTO.getAmount();
-                    if(amount >= 1.0){
-                        double newBal = accountRepository.withdrawFromAccount(accountNumber, amount);
-                        if(newBal > 0){
-                            Transaction t = new Transaction();
-                            t.setTransactionDate(generateDate());
-                            t.setTransactionType(TransactionType.WITHDRAWAL);
-                            t.setTransactionAmount(amount);
-                            t.setDescription(withdrawalRequestDTO.getDescription());
-                            t.setBalance(newBal);
-                            t.setAccountNumber(accountNumber);
-                            if(transactionRepository.addTransaction(t) != null){
-                                return newBal;
-                            }
-                        }
-                    }else throw new InvalidAmountException("Withdrawal amount must no be less than N1.0");
+                Account account = accountRepository.getAccountByAccountNumber(accountNumber);
+                if(encoder.matches(withdrawalRequestDTO.getPassword(),account.getPassword())){
+                    balance = accountRepository.getAccountByAccountNumber(accountNumber).getBalance();
+                    if(balance >= 500.0){
+                            double amount = withdrawalRequestDTO.getAmount();
+                            if(amount >= 1.0){
+                                double newBal = accountRepository.withdrawFromAccount(accountNumber, amount);
+                                if(newBal > 0){
+                                    Transaction t = new Transaction();
+                                    t.setTransactionDate(generateDate());
+                                    t.setTransactionType(TransactionType.WITHDRAWAL);
+                                    t.setTransactionAmount(amount);
+                                    t.setDescription(withdrawalRequestDTO.getDescription());
+                                    t.setBalance(newBal);
+                                    t.setAccountNumber(accountNumber);
+                                    if(transactionRepository.addTransaction(t) != null){
+                                        return newBal;
+                                    }
+                                }
+                            }else throw new InvalidAmountException("Withdrawal amount must no be less than N1.0");
 
-                }else throw new InsufficientFundException("Insufficient Account balance ");
+                        }else throw new InsufficientFundException("Insufficient Account balance ");
+                    }else{
+                    throw new UnauthorizedUserAccount("Incorrect Password");
+                }
+
 
             }else{
                 throw new AccountNotFoundException("Accounts: " + accountNumber + " ,does not exists");

@@ -2,10 +2,12 @@ package com.example.muhammad.amotul.digicore.repository.implementation;
 
 import com.example.muhammad.amotul.digicore.model.Transaction;
 import com.example.muhammad.amotul.digicore.repository.interfaces.ITransactionRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class TransactionRepositoryImpl implements ITransactionRepository {
     public static List<Transaction> transactions = new ArrayList<>();
 

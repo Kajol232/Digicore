@@ -18,9 +18,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class AccountServicesImpl implements IAccountServices {
     @Autowired
-    private static AccountRepositoryImpl accountRepository;
+    private AccountRepositoryImpl accountRepository;
     @Autowired
-    private static PasswordEncoder encoder;
+    private PasswordEncoder encoder;
     private final double INITIALDEPOSIT = 500.0;
 
     @Override

@@ -8,17 +8,20 @@ import com.example.muhammad.amotul.digicore.model.dto.request.AccountRegistratio
 import com.example.muhammad.amotul.digicore.model.dto.request.DepositRequestDTO;
 import com.example.muhammad.amotul.digicore.model.dto.request.WithdrawalRequestDTO;
 import com.example.muhammad.amotul.digicore.model.dto.response.*;
-import com.example.muhammad.amotul.digicore.security.jwt.JWTFilter;
-import com.example.muhammad.amotul.digicore.security.jwt.JWTProvider;
+import com.example.muhammad.amotul.digicore.security.jwt.JwtFilter;
+import com.example.muhammad.amotul.digicore.security.jwt.JwtProvider;
 import com.example.muhammad.amotul.digicore.service.implementation.AccountServicesImpl;
 import com.example.muhammad.amotul.digicore.service.implementation.AuthServiceImplementation;
 import com.example.muhammad.amotul.digicore.service.implementation.TransactionServicesImpl;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,19 +29,18 @@ import java.util.List;
 @RequestMapping(path = "/accounts")
 public class AccountController {
     @Autowired
-    private static JWTProvider provider;
+    private JwtProvider provider;
     @Autowired
-    private static JWTFilter filter;
+    private JwtFilter filter;
     @Autowired
-    private static AccountServicesImpl accountServices;
+    private AccountServicesImpl accountServices;
     @Autowired
-    private static TransactionServicesImpl transactionServices;
+    private TransactionServicesImpl transactionServices;
     @Autowired
-    private static AuthServiceImplementation authService;
+    private AuthServiceImplementation authService;
 
     @PostMapping(value = "/create_account", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
     public ResponseEntity<Object> createAccount(@RequestBody AccountRegistrationRequestDTO registrationRequestDTO){
         AccountRegistrationResponseDTO responseDTO = new AccountRegistrationResponseDTO();
         FailedRequestResponseDTO failedResponse = new FailedRequestResponseDTO();
@@ -74,80 +76,179 @@ public class AccountController {
     @GetMapping(value = "/account_info", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<Object> getAccountInfo(@RequestBody String accountNumber){
+    public ResponseEntity<Object> getAccountInfo(HttpServletRequest request, @RequestBody String accountNumber){
         GetAccountInfoResponseDTO responseDTO = new GetAccountInfoResponseDTO();
         FailedRequestResponseDTO failedResponse = new FailedRequestResponseDTO();
-        if(accountNumber != null || !accountNumber.isEmpty() || !accountNumber.isBlank()){
-            try {
-                Account account = accountServices.getAccountByAccountNumber(accountNumber);
-                if(account != null){
-                    responseDTO.setResponseCode(200);
-                    responseDTO.setSuccess(true);
-                    responseDTO.setMessage("Valid AccountNumber");
-                    responseDTO.setAccount(account);
+        String token = filter.getTokenFromRequest(request);
+        if (token != null) {
+            if(provider.validateToken(token)){
+                String accountNumberFromToken = provider.getAccountNumberFromToken(token);
+                if(accountNumberFromToken.equalsIgnoreCase(accountNumber)){
+                    if(accountNumber != null || !accountNumber.isEmpty() || !accountNumber.isBlank()){
+                        try {
+                            Account account = accountServices.getAccountByAccountNumber(accountNumber);
+                            if(account != null){
+                                responseDTO.setResponseCode(200);
+                                responseDTO.setSuccess(true);
+                                responseDTO.setMessage("Valid AccountNumber");
+                                responseDTO.setAccount(account);
+                                return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+                            }
+                        } catch (AccountNotFoundException e) {
+                            failedResponse.setSuccess(true);
+                            failedResponse.setMessage(e.getMessage());
+                        }
+
+                    }
+                }else {
+                    failedResponse.setSuccess(false);
+                    failedResponse.setMessage("Account does not belong to User");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
                 }
-            } catch (AccountNotFoundException e) {
-                responseDTO.setResponseCode(200);
-                responseDTO.setSuccess(true);
-                responseDTO.setMessage(e.getMessage());
-                responseDTO.setAccount(null);
+
+            }else {
+                failedResponse.setSuccess(false);
+                failedResponse.setMessage("Invalid user Token");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
             }
 
+        }else{
+            failedResponse.setSuccess(false);
+            failedResponse.setMessage("Unauthorized user");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
         }
-        return responseDTO;
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
     }
 
     @GetMapping(value = "/account_statement", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public GetAccountStatementResponseDTO generateAccountStatement(@RequestBody String accountNumber){
+    public ResponseEntity<Object> generateAccountStatement(HttpServletRequest request,@RequestBody String accountNumber){
         List<AccountStatementDTO> statements = new ArrayList<>();
         GetAccountStatementResponseDTO responseDTO = new GetAccountStatementResponseDTO();
-        if(accountNumber != null || !accountNumber.isEmpty() || !accountNumber.isBlank()){
-            try {
-                statements =transactionServices.getTransactionHistoryForAccount(accountNumber);
-                responseDTO.setCode(200);
-                responseDTO.setSuccess(true);
-                responseDTO.setMessage("Valid Account");
-                responseDTO.setAccountStatementDTOList(statements);
-            } catch (AccountNotFoundException e) {
-                responseDTO.setCode(400);
-                responseDTO.setSuccess(false);
-                responseDTO.setMessage(e.getMessage());
-                responseDTO.setAccountStatementDTOList(null);
+        FailedRequestResponseDTO failedResponse = new FailedRequestResponseDTO();
+        String token = filter.getTokenFromRequest(request);
+        if(token != null){
+            if(provider.validateToken(token)){
+                String accountNumberFromToken = provider.getAccountNumberFromToken(token);
+                if(accountNumberFromToken.equalsIgnoreCase(accountNumber)){
+                    if(accountNumber != null || !accountNumber.isEmpty() || !accountNumber.isBlank()){
+                        try {
+                            statements =transactionServices.getTransactionHistoryForAccount(accountNumber);
+                            responseDTO.setCode(200);
+                            responseDTO.setSuccess(true);
+                            responseDTO.setMessage("Valid Account");
+                            responseDTO.setAccountStatementDTOList(statements);
+                            return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+                        } catch (AccountNotFoundException e) {
+                            failedResponse.setSuccess(false);
+                            failedResponse.setMessage(e.getMessage());
 
+                        }
+                    }
+                }else {
+                    failedResponse.setSuccess(false);
+                    failedResponse.setMessage("Account does not belong to User");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
+                }
+            }else {
+                failedResponse.setSuccess(false);
+                failedResponse.setMessage("Invalid user Token");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
             }
+        }else {
+            failedResponse.setSuccess(false);
+            failedResponse.setMessage("Unauthorized user");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
         }
-        return responseDTO;
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
     }
 
     @PostMapping(value = "/deposit", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Object deposit(@RequestBody DepositRequestDTO depositRequestDTO){
+    public ResponseEntity<Object> deposit(HttpServletRequest request,@RequestBody DepositRequestDTO depositRequestDTO){
         TransactionResponseDTO responseDTO = new TransactionResponseDTO();
-        try {
-            double bal = transactionServices.depositToAccount(depositRequestDTO);
-            if(bal > 0){
-                responseDTO.setResponseCode(200);
-                responseDTO.setSuccess(true);
-                responseDTO.setMessage("New Account Balance: " + bal);
+        FailedRequestResponseDTO failedResponse = new FailedRequestResponseDTO();
+        String token = filter.getTokenFromRequest(request);
+        if(token != null) {
+            if (provider.validateToken(token)) {
+                String accountNumberFromToken = provider.getAccountNumberFromToken(token);
+                if (accountNumberFromToken.equalsIgnoreCase(depositRequestDTO.getAccountNumber())) {
+                    try {
+                        double bal = transactionServices.depositToAccount(depositRequestDTO);
+                        if (bal > 0) {
+                            responseDTO.setResponseCode(200);
+                            responseDTO.setSuccess(true);
+                            responseDTO.setMessage("New Account Balance: " + bal);
+                            return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+                        }
+                    } catch (AccountNotFoundException | InvalidAmountException e) {
+                        failedResponse.setSuccess(false);
+                        failedResponse.setMessage(e.getMessage());
+                    }
+                } else {
+                    failedResponse.setSuccess(false);
+                    failedResponse.setMessage("Account does not belong to User");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
+                }
+            } else {
+                failedResponse.setSuccess(false);
+                failedResponse.setMessage("Invalid user Token");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
             }
-        } catch (AccountNotFoundException | InvalidAmountException e) {
-            responseDTO.setResponseCode(400);
-            responseDTO.setSuccess(false);
-            responseDTO.setMessage(e.getMessage());
+        }else {
+            failedResponse.setSuccess(false);
+            failedResponse.setMessage("Unauthorized user");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
         }
-        return responseDTO;
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
     }
 
     @PostMapping(value = "/withdrawal", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Object withdrawal(@RequestBody WithdrawalRequestDTO withdrawalRequestDTO){
+    public ResponseEntity<Object> withdrawal(HttpServletRequest request, @RequestBody WithdrawalRequestDTO withdrawalRequestDTO){
         TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
-        String password = withdrawalRequestDTO.getPassword();
-        return null;
+        FailedRequestResponseDTO failedResponse = new FailedRequestResponseDTO();
+        String token = filter.getTokenFromRequest(request);
+        if(token != null) {
+            if (provider.validateToken(token)) {
+                String accountNumberFromToken = provider.getAccountNumberFromToken(token);
+                if (accountNumberFromToken.equalsIgnoreCase(withdrawalRequestDTO.getAccountNumber())) {
+                    try {
+                        double bal = transactionServices.withdrawFromAccount(withdrawalRequestDTO);
+                        if(bal > 0){
+                            transactionResponseDTO.setResponseCode(200);
+                            transactionResponseDTO.setSuccess(true);
+                            transactionResponseDTO.setMessage("New balance: " + bal);
+                            return ResponseEntity.status(HttpStatus.OK).body(transactionResponseDTO);
+                        }
+                    } catch (AccountNotFoundException | InsufficientFundException | InvalidAmountException
+                            | UnauthorizedUserAccount e) {
+                        failedResponse.setMessage(e.getMessage());
+                        failedResponse.setSuccess(false);
+                    }
+                }else {
+                            failedResponse.setSuccess(false);
+                            failedResponse.setMessage("Account does not belong to User");
+                            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
+                        }
+                    } else {
+                        failedResponse.setSuccess(false);
+                        failedResponse.setMessage("Invalid user Token");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
+                    }
+                }else {
+                    failedResponse.setSuccess(false);
+                    failedResponse.setMessage("Unauthorized user");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
+                }
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failedResponse);
 
     }
 
