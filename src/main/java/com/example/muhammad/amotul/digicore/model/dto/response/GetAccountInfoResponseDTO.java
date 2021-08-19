@@ -15,6 +15,10 @@ public class GetAccountInfoResponseDTO {
         this.account = account;
     }
 
+    public GetAccountInfoResponseDTO() {
+
+    }
+
     public int getResponseCode() {
         return responseCode;
     }

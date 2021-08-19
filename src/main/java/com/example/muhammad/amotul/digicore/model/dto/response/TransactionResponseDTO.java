@@ -11,6 +11,10 @@ public class TransactionResponseDTO {
         this.message = message;
     }
 
+    public TransactionResponseDTO() {
+
+    }
+
     public int getResponseCode() {
         return responseCode;
     }

@@ -7,7 +7,7 @@ import com.example.muhammad.amotul.digicore.model.Transaction;
 import com.example.muhammad.amotul.digicore.model.TransactionType;
 import com.example.muhammad.amotul.digicore.model.dto.request.DepositRequestDTO;
 import com.example.muhammad.amotul.digicore.model.dto.request.WithdrawalRequestDTO;
-import com.example.muhammad.amotul.digicore.model.dto.response.GetAccountStatementResponseDTO;
+import com.example.muhammad.amotul.digicore.model.dto.response.AccountStatementDTO;
 import com.example.muhammad.amotul.digicore.repository.implementation.AccountRepositoryImpl;
 import com.example.muhammad.amotul.digicore.repository.implementation.TransactionRepositoryImpl;
 import com.example.muhammad.amotul.digicore.service.interfaces.ITransactionServices;
@@ -28,7 +28,7 @@ public class TransactionServicesImpl implements ITransactionServices {
 
 
     @Override
-    public boolean depositToAccount(DepositRequestDTO depositRequestDTO) throws AccountNotFoundException, InvalidAmountException {
+    public double depositToAccount(DepositRequestDTO depositRequestDTO) throws AccountNotFoundException, InvalidAmountException {
         double balance;
         if(depositRequestDTO != null){
             String accountNumber = depositRequestDTO.getAccountNumber();
@@ -45,7 +45,7 @@ public class TransactionServicesImpl implements ITransactionServices {
                         t.setTransactionType(TransactionType.DEPOSIT);
                         t.setTransactionDate(generateDate());
                         if(transactionRepository.addTransaction(t) != null){
-                            return true;
+                            return balance;
                         }
                     }else{
                         throw new InvalidAmountException("Deposit amount must not less than N1.0 or greater than N1,000,000.0");
@@ -55,11 +55,11 @@ public class TransactionServicesImpl implements ITransactionServices {
                 throw new AccountNotFoundException("Accounts: " + accountNumber + " ,does not exists");
             }
         }
-        return false;
+        return 0;
     }
 
     @Override
-    public boolean withdrawFromAccount(WithdrawalRequestDTO withdrawalRequestDTO) throws AccountNotFoundException, InsufficientFundException, InvalidAmountException {
+    public double withdrawFromAccount(WithdrawalRequestDTO withdrawalRequestDTO) throws AccountNotFoundException, InsufficientFundException, InvalidAmountException {
         double balance;
         if(withdrawalRequestDTO != null){
             String accountNumber = withdrawalRequestDTO.getAccountNumber();
@@ -78,7 +78,7 @@ public class TransactionServicesImpl implements ITransactionServices {
                             t.setBalance(newBal);
                             t.setAccountNumber(accountNumber);
                             if(transactionRepository.addTransaction(t) != null){
-                                return true;
+                                return newBal;
                             }
                         }
                     }else throw new InvalidAmountException("Withdrawal amount must no be less than N1.0");
@@ -89,27 +89,29 @@ public class TransactionServicesImpl implements ITransactionServices {
                 throw new AccountNotFoundException("Accounts: " + accountNumber + " ,does not exists");
             }
         }
-        return false;
+        return 0;
     }
 
     @Override
-    public List<GetAccountStatementResponseDTO> getTransactionHistoryForAccount(String accountNumber) {
-        List<GetAccountStatementResponseDTO> responseDTOList = new ArrayList<>();
+    public List<AccountStatementDTO> getTransactionHistoryForAccount(String accountNumber) throws AccountNotFoundException {
+        List<AccountStatementDTO> responseDTOList = new ArrayList<>();
         if(accountRepository.isAccountNumberExists(accountNumber)){
             List<Transaction> transactions = transactionRepository.getTransactionHistoryForAccount(accountNumber);
             for(Transaction t: transactions){
                 responseDTOList.add(convertFromTransaction(t));
             }
             return responseDTOList;
+        }else{
+            throw new AccountNotFoundException("Account Number does not exists");
         }
-        return null;
+
     }
 
     private Date generateDate(){
         return new Timestamp(System.currentTimeMillis());
     }
-    private GetAccountStatementResponseDTO convertFromTransaction(Transaction t){
-        GetAccountStatementResponseDTO responseDTO = new GetAccountStatementResponseDTO();
+    private AccountStatementDTO convertFromTransaction(Transaction t){
+        AccountStatementDTO responseDTO = new AccountStatementDTO();
         responseDTO.setAmount(t.getTransactionAmount());
         responseDTO.setBalance(t.getBalance());
         responseDTO.setDescription(t.getDescription());

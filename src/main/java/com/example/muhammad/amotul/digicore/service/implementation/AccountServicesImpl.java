@@ -24,7 +24,7 @@ public class AccountServicesImpl implements IAccountServices {
     private final double INITIALDEPOSIT = 500.0;
 
     @Override
-    public boolean addAccount(AccountRegistrationRequestDTO registrationRequestDTO) throws InvalidAcountNumber,
+    public String addAccount(AccountRegistrationRequestDTO registrationRequestDTO) throws InvalidAcountNumber,
             AccountNumberExistsException, AccountNameExistsException, InvalidAmountException {
         Account account = new Account();
         String name = registrationRequestDTO.getAccountName();
@@ -40,7 +40,7 @@ public class AccountServicesImpl implements IAccountServices {
                     double deposit = registrationRequestDTO.getInitialDeposit();
                     if(deposit >= INITIALDEPOSIT){
                         account.setBalance(deposit);
-                        return true;
+                        return accountNumber;
                     }else{
                         throw new InvalidAmountException("Deposit for new Account must not be below N500.0");
                     }

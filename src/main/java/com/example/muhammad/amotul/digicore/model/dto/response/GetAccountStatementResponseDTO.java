@@ -1,65 +1,54 @@
 package com.example.muhammad.amotul.digicore.model.dto.response;
 
-import com.example.muhammad.amotul.digicore.model.TransactionType;
-
-import java.util.Date;
+import java.util.List;
 
 public class GetAccountStatementResponseDTO {
-    private Date transactionDate;
-    private TransactionType transactionType;
-    private String description;
-    private double amount;
-    private double balance;
+    private int code;
+    private boolean success;
+    private String message;
+
+    private List<AccountStatementDTO> accountStatementDTOList;
 
     public GetAccountStatementResponseDTO() {
     }
 
-    public GetAccountStatementResponseDTO(Date transactionDate, TransactionType transactionType, String description,
-                                          double amount, double balance) {
-        this.transactionDate = transactionDate;
-        this.transactionType = transactionType;
-        this.description = description;
-        this.amount = amount;
-        this.balance = balance;
+    public GetAccountStatementResponseDTO(int code, boolean success, String message,
+                                          List<AccountStatementDTO> accountStatementDTOList) {
+        this.code = code;
+        this.success = success;
+        this.message = message;
+        this.accountStatementDTOList = accountStatementDTOList;
     }
 
-    public Date getTransactionDate() {
-        return transactionDate;
+    public int getCode() {
+        return code;
     }
 
-    public void setTransactionDate(Date transactionDate) {
-        this.transactionDate = transactionDate;
+    public void setCode(int code) {
+        this.code = code;
     }
 
-    public TransactionType getTransactionType() {
-        return transactionType;
+    public boolean isSuccess() {
+        return success;
     }
 
-    public void setTransactionType(TransactionType transactionType) {
-        this.transactionType = transactionType;
+    public void setSuccess(boolean success) {
+        this.success = success;
     }
 
-    public String getDescription() {
-        return description;
+    public String getMessage() {
+        return message;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    public double getAmount() {
-        return amount;
+    public List<AccountStatementDTO> getAccountStatementDTOList() {
+        return accountStatementDTOList;
     }
 
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public double getBalance() {
-        return balance;
-    }
-
-    public void setBalance(double balance) {
-        this.balance = balance;
+    public void setAccountStatementDTOList(List<AccountStatementDTO> accountStatementDTOList) {
+        this.accountStatementDTOList = accountStatementDTOList;
     }
 }

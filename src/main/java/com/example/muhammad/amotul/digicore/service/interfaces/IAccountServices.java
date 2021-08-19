@@ -9,7 +9,7 @@ import com.example.muhammad.amotul.digicore.model.Account;
 import com.example.muhammad.amotul.digicore.model.dto.request.AccountRegistrationRequestDTO;
 
 public interface IAccountServices {
-    boolean addAccount(AccountRegistrationRequestDTO registrationRequestDTO) throws InvalidAcountNumber,
+    String addAccount(AccountRegistrationRequestDTO registrationRequestDTO) throws InvalidAcountNumber,
             AccountNumberExistsException, AccountNameExistsException, InvalidAmountException;
     Account getAccountByAccountNumber(String accountNumber) throws AccountNotFoundException;
     boolean checkIfAccountExist(String accountName);
