@@ -11,6 +11,9 @@ public class GetAccountStatementResponseDTO {
     private double amount;
     private double balance;
 
+    public GetAccountStatementResponseDTO() {
+    }
+
     public GetAccountStatementResponseDTO(Date transactionDate, TransactionType transactionType, String description,
                                           double amount, double balance) {
         this.transactionDate = transactionDate;

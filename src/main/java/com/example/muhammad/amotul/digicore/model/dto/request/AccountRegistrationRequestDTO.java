@@ -8,12 +8,15 @@ public class AccountRegistrationRequestDTO {
     private String password;
     private String confirmPassword;
     private Double initialDeposit;
+    private String accountType;
 
-    public AccountRegistrationRequestDTO(String accountName, String password, String confirmPassword, Double initialDeposit) {
+    public AccountRegistrationRequestDTO(String accountName, String password, String confirmPassword,
+                                         Double initialDeposit, String  accountType) {
         this.accountName = accountName;
         this.password = password;
         this.confirmPassword = confirmPassword;
         this.initialDeposit = initialDeposit;
+        this.accountType = accountType;
     }
 
     public String getAccountName() {
@@ -46,5 +49,13 @@ public class AccountRegistrationRequestDTO {
 
     public void setInitialDeposit(Double initialDeposit) {
         this.initialDeposit = initialDeposit;
+    }
+
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
     }
 }

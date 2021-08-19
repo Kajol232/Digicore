@@ -10,6 +10,9 @@ public class Transaction {
     private double balance;
     private TransactionType transactionType;
 
+    public Transaction() {
+    }
+
     public Transaction(String accountNumber, Date transactionDate, String description, double transactionAmount,
                        double balance, TransactionType transactionType) {
         this.accountNumber = accountNumber;

@@ -4,14 +4,18 @@ public class Account {
     private String accountNumber;
     private String accountName;
     private String password;
+    private AccountType accountType;
+    private double balance;
 
     public Account() {
     }
 
-    public Account(String accountNumber, String accountName, String password) {
+    public Account(String accountNumber, String accountName, String password, AccountType accountType, double balance) {
         this.accountNumber = accountNumber;
         this.accountName = accountName;
         this.password = password;
+        this.accountType = accountType;
+        this.balance = balance;
     }
 
     public String getAccountNumber() {
@@ -36,5 +40,21 @@ public class Account {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public AccountType getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
     }
 }

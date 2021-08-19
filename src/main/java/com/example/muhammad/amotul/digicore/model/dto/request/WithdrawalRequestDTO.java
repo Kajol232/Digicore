@@ -4,11 +4,13 @@ public class WithdrawalRequestDTO {
     private String accountNumber;
     private String password;
     private Double amount;
+    private String description;
 
-    public WithdrawalRequestDTO(String accountNumber, String password, Double amount) {
+    public WithdrawalRequestDTO(String accountNumber, String password, Double amount, String description) {
         this.accountNumber = accountNumber;
         this.password = password;
         this.amount = amount;
+        this.description = description;
     }
 
     public String getAccountNumber() {
@@ -33,5 +35,13 @@ public class WithdrawalRequestDTO {
 
     public void setAmount(Double amount) {
         this.amount = amount;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
