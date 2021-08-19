@@ -9,6 +9,10 @@ public class AccountLoginResponseDTO {
         this.accessToken = accessToken;
     }
 
+    public AccountLoginResponseDTO() {
+
+    }
+
     public boolean isSuccess() {
         return success;
     }
