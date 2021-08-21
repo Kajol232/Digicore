@@ -175,8 +175,8 @@ public class AccountController {
         String token = filter.getTokenFromRequest(request);
         if(token != null) {
             if (provider.validateToken(token)) {
-                String accountNumberFromToken = provider.getAccountNumberFromToken(token);
-                if (accountNumberFromToken.equalsIgnoreCase(depositRequestDTO.getAccountNumber())) {
+                //String accountNumberFromToken = provider.getAccountNumberFromToken(token);
+                //if (accountNumberFromToken.equalsIgnoreCase(depositRequestDTO.getAccountNumber())) {
                     try {
                         double bal = transactionServices.depositToAccount(depositRequestDTO);
                         if (bal > 0) {
@@ -189,11 +189,11 @@ public class AccountController {
                         failedResponse.setSuccess(false);
                         failedResponse.setMessage(e.getMessage());
                     }
-                } else {
-                    failedResponse.setSuccess(false);
-                    failedResponse.setMessage("Account does not belong to User");
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
-                }
+                //} else {
+                    //failedResponse.setSuccess(false);
+                    //failedResponse.setMessage("Account does not belong to User");
+                    //return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failedResponse);
+                //}
             } else {
                 failedResponse.setSuccess(false);
                 failedResponse.setMessage("Invalid user Token");
