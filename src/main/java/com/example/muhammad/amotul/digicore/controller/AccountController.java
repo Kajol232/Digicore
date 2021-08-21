@@ -82,7 +82,7 @@ public class AccountController {
         String token = filter.getTokenFromRequest(request);
         if (token != null) {
             if(provider.validateToken(token)){
-                String accountNumberFromToken = provider.getAccountNumberFromToken(token);
+                String accountNumberFromToken = provider.getAccountNumberFromToken(token).strip().trim();
                 if(accountNumberFromToken.equalsIgnoreCase(accountNumber)){
                     if(accountNumber != null || !accountNumber.isEmpty() || !accountNumber.isBlank()){
                         try {

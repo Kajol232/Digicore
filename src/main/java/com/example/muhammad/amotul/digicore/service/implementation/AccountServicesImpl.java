@@ -40,6 +40,7 @@ public class AccountServicesImpl implements IAccountServices {
                     double deposit = registrationRequestDTO.getInitialDeposit();
                     if(deposit >= INITIALDEPOSIT){
                         account.setBalance(deposit);
+                        accountRepository.addAccount(account);
                         return accountNumber;
                     }else{
                         throw new InvalidAmountException("Deposit for new Account must not be below N500.0");
